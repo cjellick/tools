@@ -1,6 +1,5 @@
 Name: Knowledge
 Description: Retrieve information from files uploaded by the user.
-Credential: github.com/gptscript-ai/credentials/model-provider
 Params: Datasets: The datasets to query
 Params: Query: The query to search for
 
