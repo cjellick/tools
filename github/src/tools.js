@@ -307,7 +307,7 @@ export async function listPRsForReview(octokit) {
 }
 
 export async function listOrgProjects(octokit, org) {
-    const { data } = await octokit.graphql(`
+    const { organization } = await octokit.graphql(`
         query($org: String!) {
             organization(login: $org) {
                 projectsV2(first: 100) {
@@ -326,7 +326,7 @@ export async function listOrgProjects(octokit, org) {
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.organization.projectsV2.nodes.map(project => {
+        const elements = organization.projectsV2.nodes.map(project => {
             return {
                 name: project.id,
                 description: '',
