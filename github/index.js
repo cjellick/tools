@@ -20,7 +20,10 @@ import {
     listUserProjects,
     listOrgProjects,
     getProject,
-    createProject
+    createProject,
+    listProjectFields,
+    createProjectField,
+    listProjectItems
 } from './src/tools.js';
 
 if (process.argv.length !== 3) {
@@ -102,6 +105,15 @@ try {
             break;
         case 'createProject':
             await createProject(octokit, process.env.OWNER, process.env.TITLE);
+            break;
+        case 'listProjectFields':
+            await listProjectFields(octokit, process.env.PROJECTID);
+            break;
+        case 'createProjectField':
+            await createProjectField(octokit, process.env.PROJECTID, process.env.NAME);
+            break;
+        case 'listProjectItems':
+            await listProjectItems(octokit, process.env.PROJECTID);
             break;
         default:
             throw new Error(`Unknown command: ${command}`);

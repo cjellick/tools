@@ -2,7 +2,7 @@
 Name: GitHub
 Description: Tools for interacting with GitHub
 Metadata: bundle: true
-Share Tools: Search Issues and PRs, Get Issue, Create Issue, Modify Issue, Close Issue, List Issue Comments, Add Comment to Issue, Get PR, Create PR, Modify PR, Close PR, List PR Comments, Add Comment to PR, List Repos, Get Star Count, List Assigned Issues, List PRs for Review, List User Projects, List Organization Projects, Get Project, Create Project, Update Project, Delete Project, List Project Columns, Create Project Column, List Column Cards, Create Card, Move Card, Update Card, Delete Card
+Share Tools: Search Issues and PRs, Get Issue, Create Issue, Modify Issue, Close Issue, List Issue Comments, Add Comment to Issue, Get PR, Create PR, Modify PR, Close PR, List PR Comments, Add Comment to PR, List Repos, Get Star Count, List Assigned Issues, List PRs for Review, List User Projects, List Organization Projects, Get Project, Create Project, Update Project, Delete Project, List Project Fields, Create Project Field, List Project Items, Create Card, Move Card, Update Card, Delete Card
 
 ---
 Name: Search Issues and PRs
@@ -252,31 +252,31 @@ Param: projectId: the ID of the project to delete
 #!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js deleteProject
 
 ---
-Name: List Project Columns
-Description: List all columns in a project
+Name: List Project Fields
+Description: List all fields (including status fields) in a GitHub Project (V2)
 Credential: ./credential
 Tools: github.com/gptscript-ai/datasets/filter
 Param: projectId: the ID of the project
 
-#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listProjectColumns
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listProjectFields
 
 ---
-Name: Create Project Column
-Description: Create a new column in a project
+Name: Create Project Field
+Description: Create a new status field in a GitHub Project (V2)
 Credential: ./credential
 Param: projectId: the ID of the project
-Param: name: the name of the column
+Param: name: the name of the field
 
-#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js createProjectColumn
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js createProjectField
 
 ---
-Name: List Column Cards
-Description: List all cards in a project column
+Name: List Project Items
+Description: List all items in a GitHub Project (V2)
 Credential: ./credential
 Tools: github.com/gptscript-ai/datasets/filter
-Param: columnId: the ID of the column
+Param: projectId: the ID of the project
 
-#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listColumnCards
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listProjectItems
 
 ---
 Name: Create Card

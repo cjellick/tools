@@ -476,7 +476,7 @@ export async function deleteProject(octokit, projectId) {
     console.log(`Deleted project ID: ${projectId}`);
 }
 
-export async function listProjectColumns(octokit, projectId) {
+export async function listProjectFields(octokit, projectId) {
     const { node } = await octokit.graphql(`
         query($projectId: ID!) {
             node(id: $projectId) {
@@ -521,7 +521,7 @@ export async function listProjectColumns(octokit, projectId) {
     }
 }
 
-export async function createProjectColumn(octokit, projectId, name) {
+export async function createProjectField(octokit, projectId, name) {
     const { createProjectV2Field } = await octokit.graphql(`
         mutation($projectId: ID!, $name: String!) {
             createProjectV2Field(input: {
@@ -545,7 +545,7 @@ export async function createProjectColumn(octokit, projectId, name) {
     console.log(`Created status field: ${createProjectV2Field.field.name} (ID: ${createProjectV2Field.field.id})`);
 }
 
-export async function listColumnCards(octokit, projectId) {
+export async function listProjectItems(octokit, projectId) {
     const { node } = await octokit.graphql(`
         query($projectId: ID!) {
             node(id: $projectId) {
