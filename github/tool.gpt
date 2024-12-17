@@ -2,7 +2,7 @@
 Name: GitHub
 Description: Tools for interacting with GitHub
 Metadata: bundle: true
-Share Tools: Search Issues and PRs, Get Issue, Create Issue, Modify Issue, Close Issue, List Issue Comments, Add Comment to Issue, Get PR, Create PR, Modify PR, Close PR, List PR Comments, Add Comment to PR, List Repos, Get Star Count, List Assigned Issues, List PRs for Review, List Projects, Get Project, Create Project, Update Project, Delete Project, List Project Columns, Create Project Column, List Column Cards, Create Card, Move Card, Update Card, Delete Card
+Share Tools: Search Issues and PRs, Get Issue, Create Issue, Modify Issue, Close Issue, List Issue Comments, Add Comment to Issue, Get PR, Create PR, Modify PR, Close PR, List PR Comments, Add Comment to PR, List Repos, Get Star Count, List Assigned Issues, List PRs for Review, List User Projects, List Organization Projects, Get Project, Create Project, Update Project, Delete Project, List Project Columns, Create Project Column, List Column Cards, Create Card, Move Card, Update Card, Delete Card
 
 ---
 Name: Search Issues and PRs
@@ -198,13 +198,22 @@ Tools: github.com/gptscript-ai/datasets/filter
 #!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listPRsForReview
 
 ---
-Name: List Projects
-Description: List all projects for a given owner
+Name: List User Projects
+Description: List all projects for a given GitHub user
 Credential: ./credential
 Tools: github.com/gptscript-ai/datasets/filter
-Param: owner: the owner of the projects
+Param: username: the username whose projects to list
 
-#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listProjects
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listUserProjects
+
+---
+Name: List Organization Projects
+Description: List all projects for a given GitHub organization
+Credential: ./credential
+Tools: github.com/gptscript-ai/datasets/filter
+Param: org: the organization whose projects to list
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listOrgProjects
 
 ---
 Name: Get Project

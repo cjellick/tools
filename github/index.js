@@ -17,7 +17,8 @@ import {
     getStarCount,
     listAssignedIssues,
     listPRsForReview,
-    listProjects,
+    listUserProjects,
+    listOrgProjects,
     getProject,
     createProject,
     updateProject,
@@ -99,8 +100,11 @@ try {
         case 'listPRsForReview':
             await listPRsForReview(octokit);
             break;
-        case 'listProjects':
-            await listProjects(octokit, process.env.OWNER);
+        case 'listUserProjects':
+            await listUserProjects(octokit, process.env.USERNAME);
+            break;
+        case 'listOrgProjects':
+            await listOrgProjects(octokit, process.env.ORG);
             break;
         case 'getProject':
             await getProject(octokit, process.env.PROJECTID);

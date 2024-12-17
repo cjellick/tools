@@ -306,9 +306,9 @@ export async function listPRsForReview(octokit) {
     }
 }
 
-export async function listProjects(octokit, owner) {
+export async function listUserProjects(octokit, username) {
     const { data } = await octokit.rest.projects.listForUser({
-        username: owner,
+        username,
     });
 
     try {
@@ -321,8 +321,32 @@ export async function listProjects(octokit, owner) {
             }
         });
         const datasetID = await gptscriptClient.addDatasetElements(elements, {
-            name: `${owner}_github_projects`,
-            description: `GitHub projects for ${owner}`
+            name: `${username}_github_projects`,
+            description: `GitHub projects for user ${username}`
+        });
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} projects`);
+    } catch (e) {
+        console.log('Failed to create dataset:', e);
+    }
+}
+
+export async function listOrgProjects(octokit, org) {
+    const { data } = await octokit.rest.projects.listForOrg({
+        org,
+    });
+
+    try {
+        const gptscriptClient = new GPTScript();
+        const elements = data.map(project => {
+            return {
+                name: `${project.id}`,
+                description: '',
+                contents: `${project.name} (ID: ${project.id}) - ${project.html_url}`
+            }
+        });
+        const datasetID = await gptscriptClient.addDatasetElements(elements, {
+            name: `${org}_github_projects`,
+            description: `GitHub projects for organization ${org}`
         });
         console.log(`Created dataset with ID ${datasetID} with ${elements.length} projects`);
     } catch (e) {
