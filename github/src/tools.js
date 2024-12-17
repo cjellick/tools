@@ -306,47 +306,36 @@ export async function listPRsForReview(octokit) {
     }
 }
 
-export async function listUserProjects(octokit, username) {
-    const { data } = await octokit.rest.projects.listForUser({
-        username,
-    });
-
-    try {
-        const gptscriptClient = new GPTScript();
-        const elements = data.map(project => {
-            return {
-                name: `${project.id}`,
-                description: '',
-                contents: `${project.name} (ID: ${project.id}) - ${project.html_url}`
-            }
-        });
-        const datasetID = await gptscriptClient.addDatasetElements(elements, {
-            name: `${username}_github_projects`,
-            description: `GitHub projects for user ${username}`
-        });
-        console.log(`Created dataset with ID ${datasetID} with ${elements.length} projects`);
-    } catch (e) {
-        console.log('Failed to create dataset:', e);
-    }
-}
-
 export async function listOrgProjects(octokit, org) {
-    const { data } = await octokit.rest.projects.listForOrg({
-        org,
+    const { data } = await octokit.graphql(`
+        query($org: String!) {
+            organization(login: $org) {
+                projectsV2(first: 100) {
+                    nodes {
+                        id
+                        title
+                        number
+                        url
+                    }
+                }
+            }
+        }
+    `, {
+        org
     });
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.map(project => {
+        const elements = data.organization.projectsV2.nodes.map(project => {
             return {
-                name: `${project.id}`,
+                name: project.id,
                 description: '',
-                contents: `${project.name} (ID: ${project.id}) - ${project.html_url}`
+                contents: `${project.title} (#${project.number}) - ${project.url}`
             }
         });
         const datasetID = await gptscriptClient.addDatasetElements(elements, {
             name: `${org}_github_projects`,
-            description: `GitHub projects for organization ${org}`
+            description: `GitHub Projects (V2) for organization ${org}`
         });
         console.log(`Created dataset with ID ${datasetID} with ${elements.length} projects`);
     } catch (e) {
@@ -354,137 +343,336 @@ export async function listOrgProjects(octokit, org) {
     }
 }
 
-export async function getProject(octokit, projectId) {
-    const { data } = await octokit.rest.projects.get({
-        project_id: projectId
-    });
-    console.log(data);
-    console.log(data.html_url);
-}
-
-export async function createProject(octokit, owner, name, body) {
-    const project = await octokit.rest.projects.createForUser({
-        username: owner,
-        name,
-        body
-    });
-
-    console.log(`Created project: ${project.data.name} (ID: ${project.data.id}) - ${project.data.html_url}`);
-}
-
-export async function updateProject(octokit, projectId, name, body) {
-    const project = await octokit.rest.projects.update({
-        project_id: projectId,
-        name,
-        body
-    });
-
-    console.log(`Updated project: ${project.data.name} (ID: ${project.data.id}) - ${project.data.html_url}`);
-}
-
-export async function deleteProject(octokit, projectId) {
-    await octokit.rest.projects.delete({
-        project_id: projectId
-    });
-    
-    console.log(`Deleted project ID: ${projectId}`);
-}
-
-export async function listProjectColumns(octokit, projectId) {
-    const { data } = await octokit.rest.projects.listColumns({
-        project_id: projectId
+export async function listUserProjects(octokit, username) {
+    const { data } = await octokit.graphql(`
+        query($username: String!) {
+            user(login: $username) {
+                projectsV2(first: 100) {
+                    nodes {
+                        id
+                        title
+                        number
+                        url
+                    }
+                }
+            }
+        }
+    `, {
+        username
     });
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.map(column => {
+        const elements = data.user.projectsV2.nodes.map(project => {
             return {
-                name: `${column.id}`,
+                name: project.id,
                 description: '',
-                contents: `${column.name} (ID: ${column.id})`
+                contents: `${project.title} (#${project.number}) - ${project.url}`
             }
         });
         const datasetID = await gptscriptClient.addDatasetElements(elements, {
-            name: `project_${projectId}_columns`,
-            description: `Columns for project ID ${projectId}`
+            name: `${username}_github_projects`,
+            description: `GitHub Projects (V2) for user ${username}`
         });
-        console.log(`Created dataset with ID ${datasetID} with ${elements.length} columns`);
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} projects`);
+    } catch (e) {
+        console.log('Failed to create dataset:', e);
+    }
+}
+
+export async function getProject(octokit, projectNumber, owner) {
+    const { data } = await octokit.graphql(`
+        query($owner: String!, $number: Int!) {
+            organization(login: $owner) {
+                projectV2(number: $number) {
+                    id
+                    title
+                    number
+                    url
+                    fields(first: 100) {
+                        nodes {
+                            ... on ProjectV2Field {
+                                id
+                                name
+                            }
+                            ... on ProjectV2IterationField {
+                                id
+                                name
+                            }
+                            ... on ProjectV2SingleSelectField {
+                                id
+                                name
+                                options {
+                                    id
+                                    name
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `, {
+        owner,
+        number: parseInt(projectNumber)
+    });
+
+    console.log(JSON.stringify(data, null, 2));
+}
+
+export async function createProject(octokit, owner, title) {
+    const { data } = await octokit.graphql(`
+        mutation($owner: String!, $title: String!) {
+            createProjectV2(input: {ownerId: $owner, title: $title}) {
+                projectV2 {
+                    id
+                    title
+                    number
+                    url
+                }
+            }
+        }
+    `, {
+        owner,
+        title
+    });
+
+    console.log(`Created project: ${data.createProjectV2.projectV2.title} (#${data.createProjectV2.projectV2.number}) - ${data.createProjectV2.projectV2.url}`);
+}
+
+export async function updateProject(octokit, projectId, title) {
+    const { data } = await octokit.graphql(`
+        mutation($projectId: ID!, $title: String!) {
+            updateProjectV2(input: {projectId: $projectId, title: $title}) {
+                projectV2 {
+                    id
+                    title
+                    number
+                    url
+                }
+            }
+        }
+    `, {
+        projectId,
+        title
+    });
+
+    console.log(`Updated project: ${data.updateProjectV2.projectV2.title} (#${data.updateProjectV2.projectV2.number}) - ${data.updateProjectV2.projectV2.url}`);
+}
+
+export async function deleteProject(octokit, projectId) {
+    await octokit.graphql(`
+        mutation($projectId: ID!) {
+            deleteProjectV2(input: {projectId: $projectId}) {
+                projectV2 {
+                    id
+                }
+            }
+        }
+    `, {
+        projectId
+    });
+
+    console.log(`Deleted project ID: ${projectId}`);
+}
+
+export async function listProjectColumns(octokit, projectId) {
+    const { data } = await octokit.graphql(`
+        query($projectId: ID!) {
+            node(id: $projectId) {
+                ... on ProjectV2 {
+                    fields(first: 100) {
+                        nodes {
+                            ... on ProjectV2SingleSelectField {
+                                id
+                                name
+                                options {
+                                    id
+                                    name
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `, {
+        projectId
+    });
+
+    try {
+        const gptscriptClient = new GPTScript();
+        const elements = data.node.fields.nodes
+            .filter(field => field && field.options) // Only get status/select fields
+            .map(field => {
+                return {
+                    name: field.id,
+                    description: '',
+                    contents: `${field.name} - Options: ${field.options.map(opt => opt.name).join(', ')}`
+                }
+            });
+        const datasetID = await gptscriptClient.addDatasetElements(elements, {
+            name: `project_${projectId}_status_fields`,
+            description: `Status fields for project ID ${projectId}`
+        });
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} status fields`);
     } catch (e) {
         console.log('Failed to create dataset:', e);
     }
 }
 
 export async function createProjectColumn(octokit, projectId, name) {
-    const column = await octokit.rest.projects.createColumn({
-        project_id: projectId,
+    const { data } = await octokit.graphql(`
+        mutation($projectId: ID!, $name: String!) {
+            createProjectV2Field(input: {
+                projectId: $projectId,
+                dataType: SINGLE_SELECT,
+                name: $name,
+            }) {
+                field {
+                    ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                    }
+                }
+            }
+        }
+    `, {
+        projectId,
         name
     });
 
-    console.log(`Created column: ${column.data.name} (ID: ${column.data.id})`);
+    console.log(`Created status field: ${data.createProjectV2Field.field.name} (ID: ${data.createProjectV2Field.field.id})`);
 }
 
-export async function listColumnCards(octokit, columnId) {
-    const { data } = await octokit.rest.projects.listCards({
-        column_id: columnId
+export async function listColumnCards(octokit, projectId) {
+    const { data } = await octokit.graphql(`
+        query($projectId: ID!) {
+            node(id: $projectId) {
+                ... on ProjectV2 {
+                    items(first: 100) {
+                        nodes {
+                            id
+                            content {
+                                ... on Issue {
+                                    title
+                                    url
+                                }
+                                ... on PullRequest {
+                                    title
+                                    url
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `, {
+        projectId
     });
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.map(card => {
+        const elements = data.node.items.nodes.map(item => {
             return {
-                name: `${card.id}`,
+                name: item.id,
                 description: '',
-                contents: `Card ID: ${card.id} - ${card.note || card.content_url}`
+                contents: `${item.content?.title || 'Draft'} - ${item.content?.url || 'No URL'}`
             }
         });
         const datasetID = await gptscriptClient.addDatasetElements(elements, {
-            name: `column_${columnId}_cards`,
-            description: `Cards in column ID ${columnId}`
+            name: `project_${projectId}_items`,
+            description: `Items in project ID ${projectId}`
         });
-        console.log(`Created dataset with ID ${datasetID} with ${elements.length} cards`);
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} items`);
     } catch (e) {
         console.log('Failed to create dataset:', e);
     }
 }
 
-export async function createCard(octokit, columnId, note = null, contentId = null, contentType = null) {
-    const cardParams = {
-        column_id: columnId
-    };
+export async function createCard(octokit, projectId, contentId) {
+    const { data } = await octokit.graphql(`
+        mutation($projectId: ID!, $contentId: ID!) {
+            addProjectV2ItemById(input: {
+                projectId: $projectId,
+                contentId: $contentId
+            }) {
+                item {
+                    id
+                }
+            }
+        }
+    `, {
+        projectId,
+        contentId
+    });
 
-    if (note) {
-        cardParams.note = note;
-    } else if (contentId && contentType) {
-        cardParams.content_id = contentId;
-        cardParams.content_type = contentType;
-    } else {
-        throw new Error('Either note or content_id and content_type must be provided');
-    }
-
-    const card = await octokit.rest.projects.createCard(cardParams);
-    console.log(`Created card: ID ${card.data.id}`);
+    console.log(`Added item to project. Item ID: ${data.addProjectV2ItemById.item.id}`);
 }
 
-export async function moveCard(octokit, cardId, columnId, position = 'top') {
-    await octokit.rest.projects.moveCard({
-        card_id: cardId,
-        position: position,
-        column_id: columnId
+export async function moveCard(octokit, projectId, itemId, fieldId, optionId) {
+    const { data } = await octokit.graphql(`
+        mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+            updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId,
+                itemId: $itemId,
+                fieldId: $fieldId,
+                value: { singleSelectOptionId: $optionId }
+            }) {
+                projectV2Item {
+                    id
+                }
+            }
+        }
+    `, {
+        projectId,
+        itemId,
+        fieldId,
+        optionId
     });
-    console.log(`Moved card ${cardId} to column ${columnId} at position ${position}`);
+
+    console.log(`Updated item status. Item ID: ${data.updateProjectV2ItemFieldValue.projectV2Item.id}`);
 }
 
-export async function updateCard(octokit, cardId, note) {
-    const card = await octokit.rest.projects.updateCard({
-        card_id: cardId,
-        note: note
+export async function updateCard(octokit, projectId, itemId, fieldId, value) {
+    const { data } = await octokit.graphql(`
+        mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
+            updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId,
+                itemId: $itemId,
+                fieldId: $fieldId,
+                value: { text: $value }
+            }) {
+                projectV2Item {
+                    id
+                }
+            }
+        }
+    `, {
+        projectId,
+        itemId,
+        fieldId,
+        value
     });
-    console.log(`Updated card: ID ${card.data.id}`);
+
+    console.log(`Updated item field. Item ID: ${data.updateProjectV2ItemFieldValue.projectV2Item.id}`);
 }
 
-export async function deleteCard(octokit, cardId) {
-    await octokit.rest.projects.deleteCard({
-        card_id: cardId
+export async function deleteCard(octokit, projectId, itemId) {
+    await octokit.graphql(`
+        mutation($projectId: ID!, $itemId: ID!) {
+            deleteProjectV2Item(input: {
+                projectId: $projectId,
+                itemId: $itemId
+            }) {
+                deletedItemId
+            }
+        }
+    `, {
+        projectId,
+        itemId
     });
-    console.log(`Deleted card ID: ${cardId}`);
+
+    console.log(`Deleted item ID: ${itemId}`);
 }
