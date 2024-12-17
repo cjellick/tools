@@ -2,7 +2,7 @@
 Name: GitHub
 Description: Tools for interacting with GitHub
 Metadata: bundle: true
-Share Tools: Search Issues and PRs, Get Issue, Create Issue, Modify Issue, Close Issue, List Issue Comments, Add Comment to Issue, Get PR, Create PR, Modify PR, Close PR, List PR Comments, Add Comment to PR, List Repos, Get Star Count, List Assigned Issues, List PRs for Review
+Share Tools: Search Issues and PRs, Get Issue, Create Issue, Modify Issue, Close Issue, List Issue Comments, Add Comment to Issue, Get PR, Create PR, Modify PR, Close PR, List PR Comments, Add Comment to PR, List Repos, Get Star Count, List Assigned Issues, List PRs for Review, List Projects, Get Project, Create Project, Update Project, Delete Project, List Project Columns, Create Project Column, List Column Cards, Create Card, Move Card, Update Card, Delete Card
 
 ---
 Name: Search Issues and PRs
@@ -196,6 +196,116 @@ Credential: ./credential
 Tools: github.com/gptscript-ai/datasets/filter
 
 #!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listPRsForReview
+
+---
+Name: List Projects
+Description: List all projects for a given owner
+Credential: ./credential
+Tools: github.com/gptscript-ai/datasets/filter
+Param: owner: the owner of the projects
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listProjects
+
+---
+Name: Get Project
+Description: Get details of a specific project by its ID
+Credential: ./credential
+Param: projectId: the ID of the project to retrieve
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js getProject
+
+---
+Name: Create Project
+Description: Create a new project for a user or organization
+Credential: ./credential
+Param: owner: the owner for whom to create the project
+Param: name: the name of the project
+Param: body: the body/description of the project
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js createProject
+
+---
+Name: Update Project
+Description: Update an existing project
+Credential: ./credential
+Param: projectId: the ID of the project to update
+Param: name: the new name of the project
+Param: body: the new body/description of the project
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js updateProject
+
+---
+Name: Delete Project
+Description: Delete an existing project
+Credential: ./credential
+Param: projectId: the ID of the project to delete
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js deleteProject
+
+---
+Name: List Project Columns
+Description: List all columns in a project
+Credential: ./credential
+Tools: github.com/gptscript-ai/datasets/filter
+Param: projectId: the ID of the project
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listProjectColumns
+
+---
+Name: Create Project Column
+Description: Create a new column in a project
+Credential: ./credential
+Param: projectId: the ID of the project
+Param: name: the name of the column
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js createProjectColumn
+
+---
+Name: List Column Cards
+Description: List all cards in a project column
+Credential: ./credential
+Tools: github.com/gptscript-ai/datasets/filter
+Param: columnId: the ID of the column
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js listColumnCards
+
+---
+Name: Create Card
+Description: Create a new card in a project column. Can create either a note card or add an issue/PR to the column.
+Credential: ./credential
+Param: columnId: the ID of the column to add the card to
+Param: note: (optional) text content for a note card
+Param: contentId: (optional) ID of the issue or PR to add
+Param: contentType: (optional) type of content ('Issue' or 'PullRequest')
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js createCard
+
+---
+Name: Move Card
+Description: Move a card to a different column and position
+Credential: ./credential
+Param: cardId: the ID of the card to move
+Param: columnId: the ID of the column to move the card to
+Param: position: (optional) position in the column ('top', 'bottom', or 'after:<card-id>')
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js moveCard
+
+---
+Name: Update Card
+Description: Update a card's note content
+Credential: ./credential
+Param: cardId: the ID of the card to update
+Param: note: the new note content
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js updateCard
+
+---
+Name: Delete Card
+Description: Delete a card from a project
+Credential: ./credential
+Param: cardId: the ID of the card to delete
+
+#!/usr/bin/env node ${GPTSCRIPT_TOOL_DIR}/index.js deleteCard
 
 ---
 !metadata:*:category

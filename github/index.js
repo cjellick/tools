@@ -16,7 +16,19 @@ import {
     listRepos,
     getStarCount,
     listAssignedIssues,
-    listPRsForReview
+    listPRsForReview,
+    listProjects,
+    getProject,
+    createProject,
+    updateProject,
+    deleteProject,
+    listProjectColumns,
+    createProjectColumn,
+    listColumnCards,
+    createCard,
+    moveCard,
+    updateCard,
+    deleteCard
 } from './src/tools.js';
 
 if (process.argv.length !== 3) {
@@ -86,6 +98,42 @@ try {
             break;
         case 'listPRsForReview':
             await listPRsForReview(octokit);
+            break;
+        case 'listProjects':
+            await listProjects(octokit, process.env.OWNER);
+            break;
+        case 'getProject':
+            await getProject(octokit, process.env.PROJECTID);
+            break;
+        case 'createProject':
+            await createProject(octokit, process.env.OWNER, process.env.NAME, process.env.BODY);
+            break;
+        case 'updateProject':
+            await updateProject(octokit, process.env.PROJECTID, process.env.NAME, process.env.BODY);
+            break;
+        case 'deleteProject':
+            await deleteProject(octokit, process.env.PROJECTID);
+            break;
+        case 'listProjectColumns':
+            await listProjectColumns(octokit, process.env.PROJECTID);
+            break;
+        case 'createProjectColumn':
+            await createProjectColumn(octokit, process.env.PROJECTID, process.env.NAME);
+            break;
+        case 'listColumnCards':
+            await listColumnCards(octokit, process.env.COLUMNID);
+            break;
+        case 'createCard':
+            await createCard(octokit, process.env.COLUMNID, process.env.NOTE, process.env.CONTENTID, process.env.CONTENTTYPE);
+            break;
+        case 'moveCard':
+            await moveCard(octokit, process.env.CARDID, process.env.COLUMNID, process.env.POSITION);
+            break;
+        case 'updateCard':
+            await updateCard(octokit, process.env.CARDID, process.env.NOTE);
+            break;
+        case 'deleteCard':
+            await deleteCard(octokit, process.env.CARDID);
             break;
         default:
             throw new Error(`Unknown command: ${command}`);

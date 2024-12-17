@@ -305,3 +305,162 @@ export async function listPRsForReview(octokit) {
         console.log('Failed to create dataset:', e);
     }
 }
+
+export async function listProjects(octokit, owner) {
+    const { data } = await octokit.rest.projects.listForUser({
+        username: owner,
+    });
+
+    try {
+        const gptscriptClient = new GPTScript();
+        const elements = data.map(project => {
+            return {
+                name: `${project.id}`,
+                description: '',
+                contents: `${project.name} (ID: ${project.id}) - ${project.html_url}`
+            }
+        });
+        const datasetID = await gptscriptClient.addDatasetElements(elements, {
+            name: `${owner}_github_projects`,
+            description: `GitHub projects for ${owner}`
+        });
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} projects`);
+    } catch (e) {
+        console.log('Failed to create dataset:', e);
+    }
+}
+
+export async function getProject(octokit, projectId) {
+    const { data } = await octokit.rest.projects.get({
+        project_id: projectId
+    });
+    console.log(data);
+    console.log(data.html_url);
+}
+
+export async function createProject(octokit, owner, name, body) {
+    const project = await octokit.rest.projects.createForUser({
+        username: owner,
+        name,
+        body
+    });
+
+    console.log(`Created project: ${project.data.name} (ID: ${project.data.id}) - ${project.data.html_url}`);
+}
+
+export async function updateProject(octokit, projectId, name, body) {
+    const project = await octokit.rest.projects.update({
+        project_id: projectId,
+        name,
+        body
+    });
+
+    console.log(`Updated project: ${project.data.name} (ID: ${project.data.id}) - ${project.data.html_url}`);
+}
+
+export async function deleteProject(octokit, projectId) {
+    await octokit.rest.projects.delete({
+        project_id: projectId
+    });
+    
+    console.log(`Deleted project ID: ${projectId}`);
+}
+
+export async function listProjectColumns(octokit, projectId) {
+    const { data } = await octokit.rest.projects.listColumns({
+        project_id: projectId
+    });
+
+    try {
+        const gptscriptClient = new GPTScript();
+        const elements = data.map(column => {
+            return {
+                name: `${column.id}`,
+                description: '',
+                contents: `${column.name} (ID: ${column.id})`
+            }
+        });
+        const datasetID = await gptscriptClient.addDatasetElements(elements, {
+            name: `project_${projectId}_columns`,
+            description: `Columns for project ID ${projectId}`
+        });
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} columns`);
+    } catch (e) {
+        console.log('Failed to create dataset:', e);
+    }
+}
+
+export async function createProjectColumn(octokit, projectId, name) {
+    const column = await octokit.rest.projects.createColumn({
+        project_id: projectId,
+        name
+    });
+
+    console.log(`Created column: ${column.data.name} (ID: ${column.data.id})`);
+}
+
+export async function listColumnCards(octokit, columnId) {
+    const { data } = await octokit.rest.projects.listCards({
+        column_id: columnId
+    });
+
+    try {
+        const gptscriptClient = new GPTScript();
+        const elements = data.map(card => {
+            return {
+                name: `${card.id}`,
+                description: '',
+                contents: `Card ID: ${card.id} - ${card.note || card.content_url}`
+            }
+        });
+        const datasetID = await gptscriptClient.addDatasetElements(elements, {
+            name: `column_${columnId}_cards`,
+            description: `Cards in column ID ${columnId}`
+        });
+        console.log(`Created dataset with ID ${datasetID} with ${elements.length} cards`);
+    } catch (e) {
+        console.log('Failed to create dataset:', e);
+    }
+}
+
+export async function createCard(octokit, columnId, note = null, contentId = null, contentType = null) {
+    const cardParams = {
+        column_id: columnId
+    };
+
+    if (note) {
+        cardParams.note = note;
+    } else if (contentId && contentType) {
+        cardParams.content_id = contentId;
+        cardParams.content_type = contentType;
+    } else {
+        throw new Error('Either note or content_id and content_type must be provided');
+    }
+
+    const card = await octokit.rest.projects.createCard(cardParams);
+    console.log(`Created card: ID ${card.data.id}`);
+}
+
+export async function moveCard(octokit, cardId, columnId, position = 'top') {
+    await octokit.rest.projects.moveCard({
+        card_id: cardId,
+        position: position,
+        column_id: columnId
+    });
+    console.log(`Moved card ${cardId} to column ${columnId} at position ${position}`);
+}
+
+export async function updateCard(octokit, cardId, note) {
+    const card = await octokit.rest.projects.updateCard({
+        card_id: cardId,
+        note: note
+    });
+    console.log(`Updated card: ID ${card.data.id}`);
+}
+
+export async function deleteCard(octokit, cardId) {
+    await octokit.rest.projects.deleteCard({
+        card_id: cardId
+    });
+    console.log(`Deleted card ID: ${cardId}`);
+}
