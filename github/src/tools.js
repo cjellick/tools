@@ -344,7 +344,7 @@ export async function listOrgProjects(octokit, org) {
 }
 
 export async function listUserProjects(octokit, username) {
-    const { data } = await octokit.graphql(`
+    const { user } = await octokit.graphql(`
         query($username: String!) {
             user(login: $username) {
                 projectsV2(first: 100) {
@@ -363,7 +363,7 @@ export async function listUserProjects(octokit, username) {
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.user.projectsV2.nodes.map(project => {
+        const elements = user.projectsV2.nodes.map(project => {
             return {
                 name: project.id,
                 description: '',
@@ -381,7 +381,7 @@ export async function listUserProjects(octokit, username) {
 }
 
 export async function getProject(octokit, projectNumber, owner) {
-    const { data } = await octokit.graphql(`
+    const { organization } = await octokit.graphql(`
         query($owner: String!, $number: Int!) {
             organization(login: $owner) {
                 projectV2(number: $number) {
@@ -417,11 +417,11 @@ export async function getProject(octokit, projectNumber, owner) {
         number: parseInt(projectNumber)
     });
 
-    console.log(JSON.stringify(data, null, 2));
+    console.log(JSON.stringify(organization.projectV2, null, 2));
 }
 
 export async function createProject(octokit, owner, title) {
-    const { data } = await octokit.graphql(`
+    const { createProjectV2 } = await octokit.graphql(`
         mutation($owner: String!, $title: String!) {
             createProjectV2(input: {ownerId: $owner, title: $title}) {
                 projectV2 {
@@ -437,11 +437,11 @@ export async function createProject(octokit, owner, title) {
         title
     });
 
-    console.log(`Created project: ${data.createProjectV2.projectV2.title} (#${data.createProjectV2.projectV2.number}) - ${data.createProjectV2.projectV2.url}`);
+    console.log(`Created project: ${createProjectV2.projectV2.title} (#${createProjectV2.projectV2.number}) - ${createProjectV2.projectV2.url}`);
 }
 
 export async function updateProject(octokit, projectId, title) {
-    const { data } = await octokit.graphql(`
+    const { updateProjectV2 } = await octokit.graphql(`
         mutation($projectId: ID!, $title: String!) {
             updateProjectV2(input: {projectId: $projectId, title: $title}) {
                 projectV2 {
@@ -457,7 +457,7 @@ export async function updateProject(octokit, projectId, title) {
         title
     });
 
-    console.log(`Updated project: ${data.updateProjectV2.projectV2.title} (#${data.updateProjectV2.projectV2.number}) - ${data.updateProjectV2.projectV2.url}`);
+    console.log(`Updated project: ${updateProjectV2.projectV2.title} (#${updateProjectV2.projectV2.number}) - ${updateProjectV2.projectV2.url}`);
 }
 
 export async function deleteProject(octokit, projectId) {
@@ -477,7 +477,7 @@ export async function deleteProject(octokit, projectId) {
 }
 
 export async function listProjectColumns(octokit, projectId) {
-    const { data } = await octokit.graphql(`
+    const { node } = await octokit.graphql(`
         query($projectId: ID!) {
             node(id: $projectId) {
                 ... on ProjectV2 {
@@ -502,7 +502,7 @@ export async function listProjectColumns(octokit, projectId) {
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.node.fields.nodes
+        const elements = node.fields.nodes
             .filter(field => field && field.options) // Only get status/select fields
             .map(field => {
                 return {
@@ -522,7 +522,7 @@ export async function listProjectColumns(octokit, projectId) {
 }
 
 export async function createProjectColumn(octokit, projectId, name) {
-    const { data } = await octokit.graphql(`
+    const { createProjectV2Field } = await octokit.graphql(`
         mutation($projectId: ID!, $name: String!) {
             createProjectV2Field(input: {
                 projectId: $projectId,
@@ -542,11 +542,11 @@ export async function createProjectColumn(octokit, projectId, name) {
         name
     });
 
-    console.log(`Created status field: ${data.createProjectV2Field.field.name} (ID: ${data.createProjectV2Field.field.id})`);
+    console.log(`Created status field: ${createProjectV2Field.field.name} (ID: ${createProjectV2Field.field.id})`);
 }
 
 export async function listColumnCards(octokit, projectId) {
-    const { data } = await octokit.graphql(`
+    const { node } = await octokit.graphql(`
         query($projectId: ID!) {
             node(id: $projectId) {
                 ... on ProjectV2 {
@@ -574,7 +574,7 @@ export async function listColumnCards(octokit, projectId) {
 
     try {
         const gptscriptClient = new GPTScript();
-        const elements = data.node.items.nodes.map(item => {
+        const elements = node.items.nodes.map(item => {
             return {
                 name: item.id,
                 description: '',
@@ -592,7 +592,7 @@ export async function listColumnCards(octokit, projectId) {
 }
 
 export async function createCard(octokit, projectId, contentId) {
-    const { data } = await octokit.graphql(`
+    const { addProjectV2ItemById } = await octokit.graphql(`
         mutation($projectId: ID!, $contentId: ID!) {
             addProjectV2ItemById(input: {
                 projectId: $projectId,
@@ -608,11 +608,11 @@ export async function createCard(octokit, projectId, contentId) {
         contentId
     });
 
-    console.log(`Added item to project. Item ID: ${data.addProjectV2ItemById.item.id}`);
+    console.log(`Added item to project. Item ID: ${addProjectV2ItemById.item.id}`);
 }
 
 export async function moveCard(octokit, projectId, itemId, fieldId, optionId) {
-    const { data } = await octokit.graphql(`
+    const { updateProjectV2ItemFieldValue } = await octokit.graphql(`
         mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
             updateProjectV2ItemFieldValue(input: {
                 projectId: $projectId,
@@ -632,11 +632,11 @@ export async function moveCard(octokit, projectId, itemId, fieldId, optionId) {
         optionId
     });
 
-    console.log(`Updated item status. Item ID: ${data.updateProjectV2ItemFieldValue.projectV2Item.id}`);
+    console.log(`Updated item status. Item ID: ${updateProjectV2ItemFieldValue.projectV2Item.id}`);
 }
 
 export async function updateCard(octokit, projectId, itemId, fieldId, value) {
-    const { data } = await octokit.graphql(`
+    const { updateProjectV2ItemFieldValue } = await octokit.graphql(`
         mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
             updateProjectV2ItemFieldValue(input: {
                 projectId: $projectId,
@@ -656,7 +656,7 @@ export async function updateCard(octokit, projectId, itemId, fieldId, value) {
         value
     });
 
-    console.log(`Updated item field. Item ID: ${data.updateProjectV2ItemFieldValue.projectV2Item.id}`);
+    console.log(`Updated item field. Item ID: ${updateProjectV2ItemFieldValue.projectV2Item.id}`);
 }
 
 export async function deleteCard(octokit, projectId, itemId) {
